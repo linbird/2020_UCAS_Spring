@@ -11,24 +11,22 @@ from caffe2.python.onnx import backend
 import onnxruntime as ort
 
 
-label_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/voc-model-labels.txt"
+# label_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/voc-model-labels.txt"
 
-onnx_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/onnx/version-RFB-320.onnx"
-class_names = [name.strip() for name in open(label_path).readlines()]
+# onnx_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/onnx/version-RFB-320.onnx"
+# # class_names = [name.strip() for name in open(label_path).readlines()]
 
-predictor = onnx.load(onnx_path)
-onnx.checker.check_model(predictor)
-onnx.helper.printable_graph(predictor.graph)
-predictor = backend.prepare(predictor, device="CPU")  # default CPU
+# predictor = onnx.load(onnx_path)
+# onnx.checker.check_model(predictor)
+# # onnx.helper.printable_graph(predictor.graph)
+# predictor = backend.prepare(predictor, device="CPU")  # default CPU
 
-ort_session = ort.InferenceSession(onnx_path)
-input_name = ort_session.get_inputs()[0].name
-
-
-threshold = 0.7
+# ort_session = ort.InferenceSession(onnx_path)
+# input_name = ort_session.get_inputs()[0].name
 
 
 def predict(width, height, confidences, boxes, prob_threshold, iou_threshold=0.3, top_k=-1):
+    print("starting predict")
     boxes = boxes[0]
     confidences = confidences[0]
     picked_box_probs = []
@@ -57,7 +55,9 @@ def predict(width, height, confidences, boxes, prob_threshold, iou_threshold=0.3
     return picked_box_probs[:, :4].astype(np.int32), np.array(picked_labels), picked_box_probs[:, 4]
 
 
-def detect(orig_image):
+def detect(orig_image, ort_session, input_name):
+    print("starting detect")
+    threshold = 0.7
     if orig_image is None:
         print("no img")
         # break
@@ -70,9 +70,11 @@ def detect(orig_image):
     image = np.expand_dims(image, axis=0)
     image = image.astype(np.float32)
     # confidences, boxes = predictor.run(image)
-    # time_time = time.time()
+    print("starting ort_session.run")
     confidences, boxes = ort_session.run(None, {input_name: image})
-    # print("cost time:{}".format(time.time() - time_time))
+    print("end ort_session.run")
+
     boxes, labels, probs = predict(orig_image.shape[1], orig_image.shape[0], confidences, boxes, threshold)
-    return [(box[1], box[0], box[3], box[2]) for box in boxes]
+    # print([(box[1], box[2], box[3], box[0]) for box in boxes])
+    return [(box[1], box[2], box[3], box[0]) for box in boxes]
     #(top, right, bottom, left)
