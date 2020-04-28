@@ -19,12 +19,12 @@ video_capture = cv2.VideoCapture(0)
 
 # Load a sample picture and learn how to recognize it.
 obama_image = face_recognition.load_image_file(
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/face_recognition/examples/registered/obama.jpg")
+    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recognition/registered/obama.jpg")
 obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
 # Load a second sample picture and learn how to recognize it.
 biden_image = face_recognition.load_image_file(
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/face_recognition/examples/registered/biden.jpg")
+    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recognition/registered/biden.jpg")
 biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
 # Create arrays of known face encodings and their names
