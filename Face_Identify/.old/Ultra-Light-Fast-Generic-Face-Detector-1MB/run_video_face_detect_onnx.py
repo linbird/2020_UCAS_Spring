@@ -1,32 +1,19 @@
+"""
+This code uses the onnx model to detect faces from live video or cameras.
+"""
 import time
 
 import cv2
 import numpy as np
 import onnx
-# import vision.utils.box_utils_numpy as box_utils
-import face_detect.vision.utils.box_utils_numpy as box_utils
+import vision.utils.box_utils_numpy as box_utils
 from caffe2.python.onnx import backend
 
 # onnx runtime
 import onnxruntime as ort
 
 
-# label_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/voc-model-labels.txt"
-
-# onnx_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/onnx/version-RFB-320.onnx"
-# # class_names = [name.strip() for name in open(label_path).readlines()]
-
-# predictor = onnx.load(onnx_path)
-# onnx.checker.check_model(predictor)
-# # onnx.helper.printable_graph(predictor.graph)
-# predictor = backend.prepare(predictor, device="CPU")  # default CPU
-
-# ort_session = ort.InferenceSession(onnx_path)
-# input_name = ort_session.get_inputs()[0].name
-
-
 def predict(width, height, confidences, boxes, prob_threshold, iou_threshold=0.3, top_k=-1):
-    # print("starting predict")
     boxes = boxes[0]
     confidences = confidences[0]
     picked_box_probs = []
@@ -55,12 +42,29 @@ def predict(width, height, confidences, boxes, prob_threshold, iou_threshold=0.3
     return picked_box_probs[:, :4].astype(np.int32), np.array(picked_labels), picked_box_probs[:, 4]
 
 
-def detect(orig_image, ort_session, input_name):
-    # print("starting detect")
-    threshold = 0.7
+label_path = "models/voc-model-labels.txt"
+
+onnx_path = "models/onnx/version-RFB-320.onnx"
+class_names = [name.strip() for name in open(label_path).readlines()]
+
+predictor = onnx.load(onnx_path)
+onnx.checker.check_model(predictor)
+onnx.helper.printable_graph(predictor.graph)
+predictor = backend.prepare(predictor, device="CPU")  # default CPU
+
+ort_session = ort.InferenceSession(onnx_path)
+input_name = ort_session.get_inputs()[0].name
+
+cap = cv2.VideoCapture(0)  # capture from camera
+
+threshold = 0.7
+
+sum = 0
+while True:
+    ret, orig_image = cap.read()
     if orig_image is None:
         print("no img")
-        # break
+        break
     image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
     image = cv2.resize(image, (320, 240))
     # image = cv2.resize(image, (640, 480))
@@ -70,11 +74,30 @@ def detect(orig_image, ort_session, input_name):
     image = np.expand_dims(image, axis=0)
     image = image.astype(np.float32)
     # confidences, boxes = predictor.run(image)
-    # print("starting ort_session.run")
+    time_time = time.time()
     confidences, boxes = ort_session.run(None, {input_name: image})
-    # print("end ort_session.run")
-
+    print("cost time:{}".format(time.time() - time_time))
     boxes, labels, probs = predict(orig_image.shape[1], orig_image.shape[0], confidences, boxes, threshold)
-    # print([(box[1], box[2], box[3], box[0]) for box in boxes])
-    return [(box[1], box[2], box[3], box[0]) for box in boxes]
-    #(top, right, bottom, left)
+    for i in range(boxes.shape[0]):
+        box = boxes[i, :]
+        label = f"{class_names[labels[i]]}: {probs[i]:.2f}"
+
+        cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), (255, 255, 0), 4)
+
+        # cv2.putText(orig_image, label,
+        #             (box[0] + 20, box[1] + 40),
+        #             cv2.FONT_HERSHEY_SIMPLEX,
+        #             1,  # font scale
+        #             (255, 0, 255),
+        #             2)  # line type
+    sum += boxes.shape[0]
+    orig_image = cv2.resize(orig_image, (0, 0), fx=0.7, fy=0.7)
+    cv2.imshow('annotated', orig_image)
+    print("Width: %d, Height: %d, FPS: %d" %
+          (cap.get(3), cap.get(4), cap.get(5)))
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+cv2.destroyAllWindows()
+print("sum:{}".format(sum))

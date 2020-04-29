@@ -1,4 +1,4 @@
-import face_recognition
+import api as face_recognition
 import cv2
 from multiprocessing import Process, Manager, cpu_count, set_start_method
 import time
@@ -34,7 +34,8 @@ def prev_id(current_id, worker_num):
 # A subprocess use to capture frames.
 def capture(read_frame_list, Global, worker_num):
     # Get a reference to webcam #0 (the default one)
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture(
+        "/home/linbird/下载/【武林外传】秀才舌战姬无命cut 吕子从此名霸江湖.mp4")
     # video_capture.set(3, 640)  # Width of the frames in the video stream.
     # video_capture.set(4, 480)  # Height of the frames in the video stream.
     # video_capture.set(5, 30) # Frame rate.
@@ -169,6 +170,75 @@ if __name__ == '__main__':
         "Barack Obama",
         "Joe Biden"
     ]
+    # Load a sample picture and learn how to recognize it.
+    # obama_image = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/obama.jpg")
+    # obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+
+    # # Load a second sample picture and learn how to recognize it.
+    # biden_image = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/biden.jpg")
+    # biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+
+    # image1 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/白展堂.jpg")
+    # image1_encoding = face_recognition.face_encodings(image1)[0]
+
+    # image2 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/郭芙蓉.jpg")
+    # image2_encoding = face_recognition.face_encodings(image2)[0]
+
+    # image3 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/姬无命.jpg")
+    # image3_encoding = face_recognition.face_encodings(image3)[0]
+
+    # image4 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/吕轻侯.jpg")
+    # image4_encoding = face_recognition.face_encodings(image4)[0]
+
+
+    # image5 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/佟湘玉.jpg")
+    # image5_encoding = face_recognition.face_encodings(image5)[0]
+
+    # image7 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/李秀莲.jpg")
+    # image7_encoding = face_recognition.face_encodings(image7)[0]
+
+    # image8 = face_recognition.image5 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/莫小贝.jpg")
+    # image8_encoding = face_recognition.face_encodings(image8)[0]
+
+    # # Create arrays of known face encodings and their names
+    # Global.known_face_encodings = [
+    #     obama_face_encoding,
+    #     biden_face_encoding,
+    #     image1_encoding,
+    #     image2_encoding,
+    #     image3_encoding,
+    #     image4_encoding,
+    #     image5_encoding,
+    #     image7_encoding,
+    #     image8_encoding,
+    # ]
+    # Global.known_face_names = [
+    #     "BO",
+    #     "JB",
+    #     # "白展堂",
+    #     # "郭芙蓉",
+    #     # "姬无命",
+    #     # "吕轻侯",
+    #     # "佟湘玉",
+    #     # "李秀莲",
+    #     # "莫小贝",
+    #     "BZT",
+    #     "GFR",
+    #     "JWM",
+    #     "LQH",
+    #     "TXY",
+    #     "LXL",
+    #     "MXB",
+    # ]
 
     # Create workers
     for worker_id in range(1, worker_num + 1):
