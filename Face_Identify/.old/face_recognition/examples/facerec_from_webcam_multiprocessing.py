@@ -1,11 +1,11 @@
-import face_recognition
+import api as face_recognition
 import cv2
 from multiprocessing import Process, Manager, cpu_count, set_start_method
 import time
-import numpy as np
+import numpy
 import threading
 import platform
-import face_detect.face_location as location
+
 
 # This is a little bit complicated (but fast) example of running face recognition on live video from your webcam.
 # This example is using multiprocess.
@@ -34,12 +34,12 @@ def prev_id(current_id, worker_num):
 # A subprocess use to capture frames.
 def capture(read_frame_list, Global, worker_num):
     # Get a reference to webcam #0 (the default one)
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture(
+        "/home/linbird/下载/【武林外传】秀才舌战姬无命cut 吕子从此名霸江湖.mp4")
     # video_capture.set(3, 640)  # Width of the frames in the video stream.
     # video_capture.set(4, 480)  # Height of the frames in the video stream.
     # video_capture.set(5, 30) # Frame rate.
-    print("Width: %d, Height: %d, FPS: %d" %
-          (video_capture.get(3), video_capture.get(4), video_capture.get(5)))
+    print("Width: %d, Height: %d, FPS: %d" % (video_capture.get(3), video_capture.get(4), video_capture.get(5)))
 
     while not Global.is_exit:
         # If it's time to read a frame
@@ -82,20 +82,21 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         rgb_frame = frame_process[:, :, ::-1]
 
         # Find all the faces and face encodings in the frame of video, cost most time
-        # face_locations = location.detect(rgb_frame)
-        face_locations = [(12,34,78,99)]
+        
+################################time killer#############################        
+        time_time = time.time()
+        face_locations = face_recognition.face_locations(rgb_frame)
+        print("location time:{}".format(time.time() - time_time))
+################################time killer#############################
 
-
-        # time_time = time.time()
-        face_encodings = face_recognition.face_encodings(
-            rgb_frame, face_locations)
-        # print("encodings time:{}".format(time.time() - time_time))
+        time_time = time.time()
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+        print("encodings time:{}".format(time.time() - time_time))
 
         # Loop through each face in this frame of video
         for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
             # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(
-                known_face_encodings, face_encoding)
+            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
 
             name = "Unknown"
 
@@ -105,15 +106,12 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
                 name = known_face_names[first_match_index]
 
             # Draw a box around the face
-            cv2.rectangle(frame_process, (left, top),
-                          (right, bottom), (0, 0, 255), 2)
+            cv2.rectangle(frame_process, (left, top), (right, bottom), (0, 0, 255), 2)
 
             # Draw a label with a name below the face
-            cv2.rectangle(frame_process, (left, bottom - 35),
-                          (right, bottom), (0, 0, 255), cv2.FILLED)
+            cv2.rectangle(frame_process, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame_process, name, (left + 6, bottom - 6),
-                        font, 1.0, (255, 255, 255), 1)
+            cv2.putText(frame_process, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
         # Wait to write
         while Global.write_num != worker_id:
@@ -152,18 +150,15 @@ if __name__ == '__main__':
     p = []
 
     # Create a thread to capture frames (if uses subprocess, it will crash on Mac)
-    p.append(threading.Thread(target=capture, args=(
-        read_frame_list, Global, worker_num,)))
+    p.append(threading.Thread(target=capture, args=(read_frame_list, Global, worker_num,)))
     p[0].start()
 
     # Load a sample picture and learn how to recognize it.
-    obama_image = face_recognition.load_image_file(
-        "/home/linbird/2020_UCAS_Spring/Face_Identify/face_recognition/examples/registered/obama.jpg")
+    obama_image = face_recognition.load_image_file("/home/linbird/2020_UCAS_Spring/Face_Identify/face_recognition/examples/registered/obama.jpg")
     obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
     # Load a second sample picture and learn how to recognize it.
-    biden_image = face_recognition.load_image_file(
-        "/home/linbird/2020_UCAS_Spring/Face_Identify/face_recognition/examples/registered/biden.jpg")
+    biden_image = face_recognition.load_image_file("/home/linbird/2020_UCAS_Spring/Face_Identify/face_recognition/examples/registered/biden.jpg")
     biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
     # Create arrays of known face encodings and their names
@@ -175,11 +170,79 @@ if __name__ == '__main__':
         "Barack Obama",
         "Joe Biden"
     ]
+    # Load a sample picture and learn how to recognize it.
+    # obama_image = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/obama.jpg")
+    # obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+
+    # # Load a second sample picture and learn how to recognize it.
+    # biden_image = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/biden.jpg")
+    # biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+
+    # image1 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/白展堂.jpg")
+    # image1_encoding = face_recognition.face_encodings(image1)[0]
+
+    # image2 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/郭芙蓉.jpg")
+    # image2_encoding = face_recognition.face_encodings(image2)[0]
+
+    # image3 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/姬无命.jpg")
+    # image3_encoding = face_recognition.face_encodings(image3)[0]
+
+    # image4 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/吕轻侯.jpg")
+    # image4_encoding = face_recognition.face_encodings(image4)[0]
+
+
+    # image5 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/佟湘玉.jpg")
+    # image5_encoding = face_recognition.face_encodings(image5)[0]
+
+    # image7 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/李秀莲.jpg")
+    # image7_encoding = face_recognition.face_encodings(image7)[0]
+
+    # image8 = face_recognition.image5 = face_recognition.load_image_file(
+    #     "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/莫小贝.jpg")
+    # image8_encoding = face_recognition.face_encodings(image8)[0]
+
+    # # Create arrays of known face encodings and their names
+    # Global.known_face_encodings = [
+    #     obama_face_encoding,
+    #     biden_face_encoding,
+    #     image1_encoding,
+    #     image2_encoding,
+    #     image3_encoding,
+    #     image4_encoding,
+    #     image5_encoding,
+    #     image7_encoding,
+    #     image8_encoding,
+    # ]
+    # Global.known_face_names = [
+    #     "BO",
+    #     "JB",
+    #     # "白展堂",
+    #     # "郭芙蓉",
+    #     # "姬无命",
+    #     # "吕轻侯",
+    #     # "佟湘玉",
+    #     # "李秀莲",
+    #     # "莫小贝",
+    #     "BZT",
+    #     "GFR",
+    #     "JWM",
+    #     "LQH",
+    #     "TXY",
+    #     "LXL",
+    #     "MXB",
+    # ]
 
     # Create workers
     for worker_id in range(1, worker_num + 1):
-        p.append(Process(target=process, args=(
-            worker_id, read_frame_list, write_frame_list, Global, worker_num,)))
+        p.append(Process(target=process, args=(worker_id, read_frame_list, write_frame_list, Global, worker_num,)))
         p[worker_id].start()
 
     # Start to show video
@@ -196,7 +259,7 @@ if __name__ == '__main__':
             fps_list.append(delay)
             if len(fps_list) > 5 * worker_num:
                 fps_list.pop(0)
-            fps = len(fps_list) / np.sum(fps_list)
+            fps = len(fps_list) / numpy.sum(fps_list)
             print("fps: %.2f" % fps)
 
             # Calculate frame delay, in order to make the video look smoother.
@@ -214,8 +277,7 @@ if __name__ == '__main__':
                 Global.frame_delay = 0
 
             # Display the resulting image
-            cv2.imshow('Video', write_frame_list[prev_id(
-                Global.write_num, worker_num)])
+            cv2.imshow('Video', write_frame_list[prev_id(Global.write_num, worker_num)])
 
         # Hit 'q' on the keyboard to quit!
         if cv2.waitKey(1) & 0xFF == ord('q'):
