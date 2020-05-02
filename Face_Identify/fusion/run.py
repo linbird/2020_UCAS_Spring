@@ -2,6 +2,8 @@ from multiprocessing import Process, Pool
 import sys
 import os
 import cv2
+from colorama import Fore
+from colorama import Style
 import numpy as np
 import face_detect.face_location as location
 import face_recog.face_recogn as face_recognition
@@ -32,12 +34,15 @@ predictor = backend.prepare(predictor, device="CPU")  # default CPU
 ort_session = ort.InferenceSession(onnx_path)
 input_name = ort_session.get_inputs()[0].name
 
+known_face_encodings = []
+known_face_names = []
+
 # Load a sample picture and learn how to recognize it.
 for person in os.listdir(cwd + "/data/photo/"):
-    face_encoding = face_recognition.face_encodings(face_recognition.load_image_file(person))[0]
+    face_encoding = face_recognition.face_encodings(face_recognition.load_image_file(cwd + "/data/photo/" + person))[0]
     known_face_encodings.append(face_encoding)
     known_face_names.append(os.path.splitext(person)[0])
-    print("loading " + os.path.splitext(person)[0] + " Done")
+    print(Fore.GREEN + 'OK: ' + Style.RESET_ALL + 'load ' + os.path.splitext(person)[0])
 
 if(sys.argv[1] == "online"):
     video_capture = cv2.VideoCapture(os.getcwd() + "/data/video.mp4")
@@ -52,18 +57,14 @@ while True:
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_frame = frame[:,:,::-1]
     
-    # time_time = time.time()
+    time1 = time.time()
     # Find all the faces and face enqcodings in the frame of video
     face_locations = location.detect(rgb_frame, ort_session, input_name)
-    # print("face_locations cost time:{}".format(time.time() - time_time))
-
-    # time_time = time.time()
+    time2 = time.time()
     face_encodings = face_recognition.face_encodings(
             rgb_frame, face_locations)
-
-    # print("face_encodings cost time:{}".format(time.time() - time_time))
-    # print(face_encodings)
-    # time_time = time.time()
+    time3 = time.time()
+    print(time2 - time1, time3 - time2)
 
     # Loop through each face in this frame of video
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
