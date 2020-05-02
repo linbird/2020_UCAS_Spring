@@ -1,4 +1,5 @@
 from multiprocessing import Process, Pool
+import sys
 import os
 import cv2
 import numpy as np
@@ -18,96 +19,31 @@ from caffe2.python.onnx import backend
 import onnxruntime as ort
 
 
-
-label_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/voc-model-labels.txt"
-
-onnx_path = "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_detect/models/onnx/version-RFB-320.onnx"
+cwd = os.getcwd()
+label_path = cwd + "/data/models/voc-model-labels.txt"
+onnx_path = cwd + "/data/models/onnx/version-RFB-320.onnx"
 # class_names = [name.strip() for name in open(label_path).readlines()]
-
 predictor = onnx.load(onnx_path)
 onnx.checker.check_model(predictor)
+
 # onnx.helper.printable_graph(predictor.graph)
 predictor = backend.prepare(predictor, device="CPU")  # default CPU
 
 ort_session = ort.InferenceSession(onnx_path)
 input_name = ort_session.get_inputs()[0].name
 
-# Get a reference to webcam #0 (the default one)
-video_capture = cv2.VideoCapture(
-    "/home/linbird/下载/【武林外传】秀才舌战姬无命cut 吕子从此名霸江湖.mp4")
-
 # Load a sample picture and learn how to recognize it.
-obama_image = face_recognition.load_image_file(
-<<<<<<< HEAD
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recognition/registered/obama.jpg")
-=======
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/obama.jpg")
->>>>>>> dc37e543d67df68b0dfc16a8face8d80eca4aebb
-obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+for person in os.listdir(cwd + "/data/photo/"):
+    face_encoding = face_recognition.face_encodings(face_recognition.load_image_file(person))[0]
+    known_face_encodings.append(face_encoding)
+    known_face_names.append(os.path.splitext(person)[0])
+    print("loading " + os.path.splitext(person)[0] + " Done")
 
-# Load a second sample picture and learn how to recognize it.
-biden_image = face_recognition.load_image_file(
-<<<<<<< HEAD
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recognition/registered/biden.jpg")
-=======
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/biden.jpg")
->>>>>>> dc37e543d67df68b0dfc16a8face8d80eca4aebb
-biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
-
-image1 = face_recognition.load_image_file("/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/白展堂.jpg")
-image1_encoding = face_recognition.face_encodings(image1)[0]
-
-image2 = face_recognition.load_image_file("/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/郭芙蓉.jpg")
-image2_encoding = face_recognition.face_encodings(image2)[0]
-
-image3 = face_recognition.load_image_file("/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/姬无命.jpg")
-image3_encoding = face_recognition.face_encodings(image3)[0]
-
-image4 = face_recognition.load_image_file("/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/吕轻侯.jpg")
-image4_encoding = face_recognition.face_encodings(image4)[0]
-
-
-image5 = face_recognition.load_image_file("/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/佟湘玉.jpg")
-image5_encoding = face_recognition.face_encodings(image5)[0]
-
-image7 = face_recognition.load_image_file(
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/李秀莲.jpg")
-image7_encoding = face_recognition.face_encodings(image7)[0]
-
-image8 = face_recognition.image5 = face_recognition.load_image_file(
-    "/home/linbird/2020_UCAS_Spring/Face_Identify/fusion/face_recog/registered/莫小贝.jpg")
-image8_encoding = face_recognition.face_encodings(image8)[0]
-
+if(sys.argv[1] == "online"):
+    video_capture = cv2.VideoCapture(os.getcwd() + "/data/video.mp4")
+else:
+    video_capture = cv2.VideoCapture(0)
 # Create arrays of known face encodings and their names
-known_face_encodings = [
-    obama_face_encoding,
-    biden_face_encoding,
-    image1_encoding,
-    image2_encoding,
-    image3_encoding,
-    image4_encoding,
-    image5_encoding,
-    image7_encoding,
-    image8_encoding,
-]
-known_face_names = [
-    "BO",
-    "JB",
-    # "白展堂",
-    # "郭芙蓉",
-    # "姬无命",
-    # "吕轻侯",
-    # "佟湘玉",
-    # "李秀莲",
-    # "莫小贝",
-    "BZT",
-    "GFR",
-    "JWM",
-    "LQH",
-    "TXY",
-    "LXL",
-    "MXB",
-]
 
 while True:
     # Grab a single frame of video
@@ -119,9 +55,7 @@ while True:
     # time_time = time.time()
     # Find all the faces and face enqcodings in the frame of video
     face_locations = location.detect(rgb_frame, ort_session, input_name)
-    # face_locations = face_recognition.face_locations(rgb_frame)
     # print("face_locations cost time:{}".format(time.time() - time_time))
-    # face_num = len(face_locations)
 
     # time_time = time.time()
     face_encodings = face_recognition.face_encodings(
