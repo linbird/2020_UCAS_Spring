@@ -9,6 +9,7 @@ import face_detect.face_location as location
 import face_recog.face_recogn as face_recognition
 from multiprocessing import Pool
 from multiprocessing import cpu_count
+from functools import partial
 
 import time
 
@@ -44,7 +45,7 @@ for person in os.listdir(cwd + "/data/photo/"):
     known_face_names.append(os.path.splitext(person)[0])
     print(Fore.GREEN + 'OK: ' + Style.RESET_ALL + 'load ' + os.path.splitext(person)[0])
 
-if(sys.argv[1] == "online"):
+if(sys.argv[1] != "online"):
     video_capture = cv2.VideoCapture(os.getcwd() + "/data/video.mp4")
 else:
     video_capture = cv2.VideoCapture(0)
@@ -60,9 +61,16 @@ while True:
     time1 = time.time()
     # Find all the faces and face enqcodings in the frame of video
     face_locations = location.detect(rgb_frame, ort_session, input_name)
+#    multi_encode = partial(face_recognition.face_encodings, face_image=rgb_frame)
+#    pool = Pool(cpu_count()-1)
+#    face_encodings = []
     time2 = time.time()
-    face_encodings = face_recognition.face_encodings(
-            rgb_frame, face_locations)
+#    face_encodings = face_recognition.face_encodings(
+#            rgb_frame, face_locations)
+#    face_encodings.append(pool.map(multi_encode, face_locations))
+#    pool.close()
+#    pool.join()
+    face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
     time3 = time.time()
     print(time2 - time1, time3 - time2)
 

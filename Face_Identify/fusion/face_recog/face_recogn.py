@@ -4,6 +4,7 @@ import PIL.Image
 import dlib
 import numpy as np
 from PIL import ImageFile
+import time
 
 try:
     import face_recognition_models

@@ -1,32 +1,23 @@
-# -*- coding:utf-8 -*-
-
+from functools import partial
 import time
-import multiprocessing
+from multiprocessing import Pool
+import os
 
 
-def job(x ,y):
-    """
-        :param x:
-        :param y:
-        :return:
-    """
-    return x * y
+def my_print(x, y):
+    print(os.getpid(), ': ', x+y)
+    time.sleep(1)
+    return x+y
 
-def job1(z):
-    """
-        :param z:
-        :return:
-        """
-    return job(z[0], z[1])
-
-
-if __name__ == "__main__":
-    time1=time.time()
-    pool = multiprocessing.Pool(2)
-    data_list=[(1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9),(10,10)]
-    res = pool.map(job1,data_list)
-    time2=time.time()
-    print(res)
+if __name__ == '__main__':# 多线程，多参数，partial版本
+    x = [1, 2, 3, 4, 5, 6]
+    y = 1
+ 
+    partial_func = partial(my_print, y=y)
+    pool = Pool(4)
+    result=[]
+    result.append(pool.map(partial_func, x))
     pool.close()
     pool.join()
-    print('总共耗时：' + str(time2 - time1) + 's')
+    for i in result:
+        print(i)
