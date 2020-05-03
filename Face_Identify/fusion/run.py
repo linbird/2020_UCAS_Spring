@@ -40,8 +40,11 @@ known_face_names = []
 
 # Load a sample picture and learn how to recognize it.
 for person in os.listdir(cwd + "/data/photo/"):
-    face_encoding = face_recognition.face_encodings(face_recognition.load_image_file(cwd + "/data/photo/" + person))[0]
-    known_face_encodings.append(face_encoding)
+    known_face_encodings.append(face_recognition.face_encodings(face_recognition.load_image_file(cwd + "/data/photo/" + person))[0])
+    #img = face_recognition.load_image_file(cwd + "/data/photo/" + person)
+    #face_encoding = face_recognition.face_encodings(img)[0]
+    #print(face_encoding)
+    #known_face_encodings.append(face_encoding)
     known_face_names.append(os.path.splitext(person)[0])
     print(Fore.GREEN + 'OK: ' + Style.RESET_ALL + 'load ' + os.path.splitext(person)[0])
 
@@ -65,23 +68,45 @@ while True:
     # Find all the faces and face enqcodings in the frame of video
     face_locations = location.detect(rgb_frame, ort_session, input_name)
     time2 = time.time()
+    print(Fore.GREEN + "创建多进程： " + Style.RESET_ALL)
+#    pool = Pool(cpu_count()-1)
+#    face_encodings = []
+#    for face_location in face_locations:
+#        print("执行进程")
+#        #face_encoding = pool.apply_async(face_recognition.face_encodings, (rgb_frame, [face_location])).get()
+#        #print(face_encoding)
+#        face_encoding = face_recognition.face_encodings(rgb_frame, [face_location])
+#        #face_encodings.append(face_encoding[0])
+#        face_encodings.append(face_encoding)
+##   face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+#
+#    pool.close()
+#    pool.join()
 
     pool = Pool(cpu_count()-1)
-    face_encodings = []
+    locations_encoding = []
     for face_location in face_locations:
-        face_encoding = pool.apply_async(face_recognition.face_encodings, (rgb_frame, [face_location])).get()
-        face_encodings.append(face_encoding[0])
-    # face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+        print("执行进程")
+        #face_encoding = pool.apply_async(face_recognition.face_encodings, (rgb_frame, [face_location])).get()
+        #print(face_encoding)
+        face_encoding = face_recognition.face_encodings(rgb_frame, [face_location])
+        #face_encodings.append(face_encoding[0])
+        locations_encoding.append([face_location, face_encoding[0]])
+#   face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
     pool.close()
     pool.join()
 
+    
     time4 = time.time()
     print(time2 - time1, time4 - time2)
  
+#    # Loop through each face in this frame of video
+#    for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
     # Loop through each face in this frame of video
-    for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+    for (top, right, bottom, left), face_encoding in locations_encoding:
         # See if the face is a match for the known face(s)
+        print(face_encoding)
         matches = face_recognition.compare_faces(
                 known_face_encodings, face_encoding)
 
@@ -109,7 +134,7 @@ while True:
 
             # Hit 'q' on the keyboard to quit!
     cost = time.time() - time_start
-    cv2.putText(frame, str(format((1/cost), '0.2f')), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 0, 0), 1)
+    cv2.putText(frame, str(format((1/cost), '0.2f')), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (255,255,255), 1)
     cv2.imshow('Video', frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
