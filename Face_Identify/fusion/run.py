@@ -10,6 +10,8 @@ import face_recog.face_recogn as face_recognition
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 from functools import partial
+import threading
+from queue import Queue
 
 import time
 
@@ -20,6 +22,20 @@ from caffe2.python.onnx import backend
 
 # onnx runtime
 import onnxruntime as ort
+
+def mp_encoding(face_image, face_locations):
+    res =Queue()
+    pths = []
+    results = []
+    for face_location in face_locations:
+        pths.append(threading.Thread(target=face_recognition.mp_face_encodings, args=(rgb_frame, res, [face_location])))
+        pths[-1].start()
+    for pth in pths:
+        pth.join()
+    for _ in range(len(face_locations)):
+        results.append((res.get()[0]))
+    return results
+    # print(results)
 
 
 cwd = os.getcwd()
@@ -93,7 +109,9 @@ while True:
 #    time4 = time.time()
 ##    print(time2 - time1, time4 - time2)
  
+    # face_encodings = mp_encoding(rgb_frame, face_locations)
     face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+    # print(face_encodings)
 #    # Loop through each face in this frame of video
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
     # Loop through each face in this frame of video
@@ -125,7 +143,7 @@ while True:
             cv2.putText(frame, name, (left, bottom),
                     cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 255), 1)
 
-    print(time.time() - time4)
+    # print(time.time() - time4)
             # Hit 'q' on the keyboard to quit!
     fps = "FPS:" +  str(format((1/(time.time() - time_start)), '0.2f'))
     cv2.putText(frame, fps, (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (255,255,255), 1)
