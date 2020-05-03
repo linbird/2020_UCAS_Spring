@@ -55,7 +55,9 @@ while True:
     time_start = time.time();
     # Grab a single frame of video
     ret, frame = video_capture.read()
-
+    if not ret:
+        print(Fore.RED + "ERROR:" + Style.RESET_ALL + "no frame input" )
+        break
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_frame = frame[:,:,::-1]
 
