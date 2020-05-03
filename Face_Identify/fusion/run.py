@@ -52,26 +52,27 @@ else:
 # Create arrays of known face encodings and their names
 
 while True:
+    time_start = time.time();
     # Grab a single frame of video
     ret, frame = video_capture.read()
 
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_frame = frame[:,:,::-1]
-    
-    time1 = time.time()
+
+    # time1 = time.time()
     # Find all the faces and face enqcodings in the frame of video
     face_locations = location.detect(rgb_frame, ort_session, input_name)
-    time2 = time.time()
+    # time2 = time.time()
     # print("face_image", rgb_frame.shape, frame.shape)
 
     # multi_encode = partial(face_recognition.face_encodings, face_image=rgb_frame)
     pool = Pool(cpu_count()-1)
     face_encodings = []
-    time3 = time.time()
+    # time3 = time.time()
     # print("face_locations: ", len(face_locations))
     for face_location in face_locations:
-    #     # face_encodings = face_recognition.face_encodings(rgb_frame, [face_location])
-        
+        #     # face_encodings = face_recognition.face_encodings(rgb_frame, [face_location])
+
     #     # print(pool.apply_async(face_recognition.face_encodings, (rgb_frame, face_location)).get())
         face_encoding = pool.apply_async(face_recognition.face_encodings, (rgb_frame, [face_location])).get()
         face_encodings.append(face_encoding[0])
@@ -91,8 +92,8 @@ while True:
     #     p.join()
     # print("Multiprocess cpu", time.time() - start)
 
-    time4 = time.time()
-    print(time2 - time1, time4 - time3)
+    # time4 = time.time()
+    # print(time2 - time1, time4 - time3)
     # origin = face_recognition.face_encodings(rgb_frame, face_locations)
     # print(type(face_encodings) == type(origin))
     # face_encodings = face_encodings[0]
@@ -100,7 +101,7 @@ while True:
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(
-            known_face_encodings, face_encoding)
+                known_face_encodings, face_encoding)
 
         name = "Unknown"
 
@@ -111,11 +112,10 @@ while True:
 
         # Or instead, use the known face with the smallest distance to the new face
         face_distances = face_recognition.face_distance(
-            known_face_encodings, face_encoding)
+                known_face_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
         if matches[best_match_index]:
             name = known_face_names[best_match_index]
-
 
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
         if name == "Unknown":
@@ -123,9 +123,11 @@ while True:
         else:
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
             cv2.putText(frame, name, (left, bottom),
-                        cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 255), 1)
+                    cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 255), 1)
 
-    # Hit 'q' on the keyboard to quit!
+            # Hit 'q' on the keyboard to quit!
+    cost = time.time() - time_start
+    cv2.putText(frame, str(format((1/cost), '0.2f')), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 0, 0), 1)
     cv2.imshow('Video', frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
