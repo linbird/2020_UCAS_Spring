@@ -133,8 +133,8 @@ while True:
                     cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 255), 1)
 
             # Hit 'q' on the keyboard to quit!
-    cost = time.time() - time_start
-    cv2.putText(frame, str(format((1/cost), '0.2f')), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (255,255,255), 1)
+    fps = "FPS:" +  str(format((1/(time.time() - time_start)), '0.2f'))
+    cv2.putText(frame, fps, (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (255,255,255), 1)
     cv2.imshow('Video', frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
