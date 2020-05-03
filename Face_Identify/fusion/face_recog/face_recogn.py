@@ -4,6 +4,7 @@ import PIL.Image
 import dlib
 import numpy as np
 from PIL import ImageFile
+# import time
 
 try:
     import face_recognition_models
@@ -210,7 +211,11 @@ def face_encodings(face_image, known_face_locations=None, num_jitters=1, model="
     :param model: Optional - which model to use. "large" (default) or "small" which only returns 5 points but is faster.
     :return: A list of 128-dimensional face encodings (one for each face in the image)
     """
-    # print("encoding")
+    # print(len(face_image))
+    # print("encoding", face_image.shape())
+    if(type(face_image) == "tulpe"):
+        known_face_locations = face_image[1]
+        face_image = face_image[0]
     raw_landmarks = _raw_face_landmarks(face_image, known_face_locations, model)
     return [np.array(face_encoder.compute_face_descriptor(face_image, raw_landmark_set, num_jitters)) for raw_landmark_set in raw_landmarks]
 
