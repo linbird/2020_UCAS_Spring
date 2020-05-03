@@ -5,6 +5,7 @@ import dlib
 import numpy as np
 from PIL import ImageFile
 # import time
+import threading
 
 try:
     import face_recognition_models
@@ -201,7 +202,8 @@ def face_landmarks(face_image, face_locations=None, model="large"):
         raise ValueError("Invalid landmarks model type. Supported models are ['small', 'large'].")
 
 
-def mp_face_encodings(face_image, res, known_face_location=None,  num_jitters=1, model="small"):
+def mp_face_encodings(face_image, res, known_face_location=None, num_jitters=1, model="small"):
+    print('Thread id : %d' % threading.currentThread().ident)
     raw_landmarks = _raw_face_landmarks(face_image, known_face_location, model)
     res.put([np.array(face_encoder.compute_face_descriptor(face_image, raw_landmark_set, num_jitters)) for raw_landmark_set in raw_landmarks])
 

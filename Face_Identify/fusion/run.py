@@ -28,12 +28,13 @@ def mp_encoding(face_image, face_locations):
     pths = []
     results = []
     for face_location in face_locations:
-        pths.append(threading.Thread(target=face_recognition.mp_face_encodings, args=(rgb_frame, res, [face_location])))
+        pths.append(threading.Thread(target=face_recognition.mp_face_encodings, args=(rgb_frame, res, [face_location]), name=str))
         pths[-1].start()
     for pth in pths:
         pth.join()
     for _ in range(len(face_locations)):
         results.append((res.get()[0]))
+    print('Thread end')
     return results
     # print(results)
 
@@ -108,9 +109,10 @@ while True:
 ##    face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 #    time4 = time.time()
 ##    print(time2 - time1, time4 - time2)
- 
-    # face_encodings = mp_encoding(rgb_frame, face_locations)
-    face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+    if len(face_locations) > 1:
+        face_encodings = mp_encoding(rgb_frame, face_locations)
+    else:
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
     # print(face_encodings)
 #    # Loop through each face in this frame of video
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
