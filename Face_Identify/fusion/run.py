@@ -33,8 +33,7 @@ ort_session = ort.InferenceSession(onnx_path)
 input_name = ort_session.get_inputs()[0].name
 
 # Get a reference to webcam #0 (the default one)
-video_capture = cv2.VideoCapture(
-    "/home/linbird/下载/[高清 1080P] 【中字】奥巴马一周演讲：医保 @阿尔法小分队.flv")
+video_capture = cv2.VideoCapture("/home/linbird/video.mp4")
 
 # Load a sample picture and learn how to recognize it.
 obama_image = face_recognition.load_image_file(
