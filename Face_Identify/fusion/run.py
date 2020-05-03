@@ -10,6 +10,8 @@ import face_recog.face_recogn as face_recognition
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 from functools import partial
+import threading
+from queue import Queue
 
 import time
 
@@ -20,6 +22,21 @@ from caffe2.python.onnx import backend
 
 # onnx runtime
 import onnxruntime as ort
+
+def mp_encoding(face_image, face_locations):
+    res =Queue()
+    pths = []
+    results = []
+    for face_location in face_locations:
+        pths.append(threading.Thread(target=face_recognition.mp_face_encodings, args=(rgb_frame, res, [face_location]), name=str))
+        pths[-1].start()
+    for pth in pths:
+        pth.join()
+    for _ in range(len(face_locations)):
+        results.append((res.get()[0]))
+    print('Thread end')
+    return results
+    # print(results)
 
 
 cwd = os.getcwd()
@@ -40,8 +57,11 @@ known_face_names = []
 
 # Load a sample picture and learn how to recognize it.
 for person in os.listdir(cwd + "/data/photo/"):
-    face_encoding = face_recognition.face_encodings(face_recognition.load_image_file(cwd + "/data/photo/" + person))[0]
-    known_face_encodings.append(face_encoding)
+    known_face_encodings.append(face_recognition.face_encodings(face_recognition.load_image_file(cwd + "/data/photo/" + person))[0])
+    #img = face_recognition.load_image_file(cwd + "/data/photo/" + person)
+    #face_encoding = face_recognition.face_encodings(img)[0]
+    #print(face_encoding)
+    #known_face_encodings.append(face_encoding)
     known_face_names.append(os.path.splitext(person)[0])
     print(Fore.GREEN + 'OK: ' + Style.RESET_ALL + 'load ' + os.path.splitext(person)[0])
 
@@ -61,47 +81,45 @@ while True:
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_frame = frame[:,:,::-1]
 
-    # time1 = time.time()
+    time1 = time.time()
     # Find all the faces and face enqcodings in the frame of video
     face_locations = location.detect(rgb_frame, ort_session, input_name)
-    # time2 = time.time()
-    # print("face_image", rgb_frame.shape, frame.shape)
-
-    # multi_encode = partial(face_recognition.face_encodings, face_image=rgb_frame)
-    pool = Pool(cpu_count()-1)
-    face_encodings = []
-    # time3 = time.time()
-    # print("face_locations: ", len(face_locations))
-    for face_location in face_locations:
-        #     # face_encodings = face_recognition.face_encodings(rgb_frame, [face_location])
-
-    #     # print(pool.apply_async(face_recognition.face_encodings, (rgb_frame, face_location)).get())
-        face_encoding = pool.apply_async(face_recognition.face_encodings, (rgb_frame, [face_location])).get()
-        face_encodings.append(face_encoding[0])
-        # face_encodings.append(face_encoding.get())
-    # # print((face_encoding.get()))
-    # # face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
-    # # face_encodings.append(pool.map(multi_encode, face_locations))
-    pool.close()
-    pool.join()
-# p_list = [Process(target=count, args=(1,1)) for _ in range(10)]
-
-    # p_list = [Process(target=face_recognition.face_encodings, args=(rgb_frame, [face_location])) for face_location in face_locations]
-    # start = time.time()
-    # for p in p_list:
-    #     p.start()
-    # for p in p_list:
-    #     p.join()
-    # print("Multiprocess cpu", time.time() - start)
-
-    # time4 = time.time()
-    # print(time2 - time1, time4 - time3)
-    # origin = face_recognition.face_encodings(rgb_frame, face_locations)
-    # print(type(face_encodings) == type(origin))
-    # face_encodings = face_encodings[0]
-    # Loop through each face in this frame of video
+    time2 = time.time()
+#多进程入不敷出
+##    print(Fore.GREEN + "创建多进程： " + Style.RESET_ALL)
+#    if len(face_locations) <= 1:
+#       face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+#       locations_encoding = zip(face_locations, face_encodings)
+#    else:
+#        pool = Pool(min(cpu_count()-1, len(face_locations)))
+#        locations_encoding = []
+#        for face_location in face_locations:
+#            #print("执行进程")
+#            #face_encoding = pool.apply_async(face_recognition.face_encodings, (rgb_frame, [face_location])).get()
+#            #print(face_encoding)
+#            face_encoding = face_recognition.face_encodings(rgb_frame, [face_location])
+#            #face_encodings.append(face_encoding[0])
+#            locations_encoding.append([face_location, face_encoding[0]])
+##       face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+#
+#        pool.close()
+#        pool.join()
+##    
+#    
+##    face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+#    time4 = time.time()
+##    print(time2 - time1, time4 - time2)
+    if len(face_locations) > 1:
+        face_encodings = mp_encoding(rgb_frame, face_locations)
+    else:
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+    # print(face_encodings)
+#    # Loop through each face in this frame of video
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+    # Loop through each face in this frame of video
+    #for (top, right, bottom, left), face_encoding in locations_encoding:
         # See if the face is a match for the known face(s)
+        # print(face_encoding)
         matches = face_recognition.compare_faces(
                 known_face_encodings, face_encoding)
 
@@ -127,9 +145,10 @@ while True:
             cv2.putText(frame, name, (left, bottom),
                     cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 255), 1)
 
+    # print(time.time() - time4)
             # Hit 'q' on the keyboard to quit!
-    cost = time.time() - time_start
-    cv2.putText(frame, str(format((1/cost), '0.2f')), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (111, 111, 111), 1)
+    fps = "FPS:" +  str(format((1/(time.time() - time_start)), '0.2f'))
+    cv2.putText(frame, fps, (5, 20), cv2.FONT_HERSHEY_PLAIN, 1.2, (255,255,255), 1)
     cv2.imshow('Video', frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
