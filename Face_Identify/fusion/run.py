@@ -52,6 +52,7 @@ known_face_names = [
 
 while True:
     # Grab a single frame of video
+    time_start = time.time()
     ret, frame = video_capture.read()
 
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
@@ -100,7 +101,9 @@ while True:
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
             cv2.putText(frame, name, (left, bottom),
                         cv2.FONT_HERSHEY_PLAIN, 1.2, (255, 255, 255), 1)
-
+    
+    fps = "FPS:" + str(format(1/(time.time()-time_start), '.2f'))
+    cv2.putText(frame, fps, (5,15),cv2.FONT_HERSHEY_PLAIN, 1, (255,255,255), 2)
     # Hit 'q' on the keyboard to quit!
     cv2.imshow('Video', frame)
 
